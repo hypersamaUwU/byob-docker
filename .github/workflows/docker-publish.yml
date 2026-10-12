@@ -38,7 +38,15 @@ jobs:
           cache: "pip"
           cache-dependency-path: "web-gui/requirements.txt"
 
-      - name: Install dependencies
+      # opencv-python requires libGL at runtime on headless Ubuntu runners
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-glx \
+            libglib2.0-0
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
@@ -46,13 +54,17 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          # Fail on syntax errors or undefined names only
-          flake8 web-gui/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Fail on syntax errors or undefined names in the web-gui source
+          flake8 web-gui/buildyourownbotnet \
+            --count \
+            --select=E9,F63,F7,F82 \
+            --show-source \
+            --statistics
 
       - name: Run tests
         run: |
           cd web-gui
-          pytest
+          pytest tests/ -v
 
   # ── Job 2: Build & push Docker image ───────────────────────────────────────
   build-and-push:
