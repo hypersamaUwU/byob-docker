@@ -1,68 +1,25 @@
-# =============================================================================
-# BYOB Web GUI — Standalone Docker Compose
-# =============================================================================
-# This file is designed for END-USERS who want to run BYOB WITHOUT cloning
-# the repository. It pulls the pre-built image from GitHub Container Registry.
-#
-# Quick start:
-#   1. Copy this file to any directory on your machine.
-#   2. (Optional) Create a .env file next to it (see below).
-#   3. Run:  docker compose up -d
-#   4. Open: http://localhost:5000
-#
-# Environment variables (create a .env file in the same directory):
-#   BYOB_SECRET_KEY=<your-random-secret-key>   # strongly recommended
-#   BYOB_C2_PORT=1337                          # C2 listener port (default: 1337)
-#   BYOB_WEB_PORT=5000                         # Web GUI port    (default: 5000)
-# =============================================================================
-
 services:
   byob:
-    # ── Image ─────────────────────────────────────────────────────────────────
-    # Pull the latest image published to GitHub Container Registry.
-    # Replace <owner> with the GitHub username / org that owns the repo.
-    image: ghcr.io/malwaredllc/byob:latest
-
+    image: ghcr.io/hypersamauwu/byob-docker:latest
     container_name: byob-web-gui
-
-    # ── Restart policy ────────────────────────────────────────────────────────
     restart: unless-stopped
-
-    # ── Port mappings ─────────────────────────────────────────────────────────
-    # HOST:CONTAINER
     ports:
-      - "${BYOB_WEB_PORT:-5000}:5000"   # Flask web GUI
-      - "${BYOB_C2_PORT:-1337}:1337"    # C2 reverse TCP shell listener
-      - "1338:1338"                      # BYOB modules HTTP server
-      - "1339:1339"                      # BYOB packages HTTP server
-
-    # ── Environment variables ─────────────────────────────────────────────────
+      - "${BYOB_WEB_PORT:-5000}:5000"
+      - "${BYOB_C2_PORT:-1337}:1337"
+      - "1338:1338"
+      - "1339:1339"
     environment:
-      # IMPORTANT: set a strong random value in production!
-      # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
       BYOB_APP_SECRET_KEY: "${BYOB_SECRET_KEY:-changeme_set_a_real_secret_key}"
-
-      # Database URI — points to the persistent named volume below
       SQLALCHEMY_DATABASE_URI: "sqlite:////data/database.db"
-
       PYTHONUNBUFFERED: "1"
-
-    # ── Volume: persistent SQLite database ────────────────────────────────────
-    # The database is stored outside the container so it survives restarts and
-    # image upgrades. To reset: docker compose down -v
     volumes:
       - byob-data:/data
-
-    # ── Health check ──────────────────────────────────────────────────────────
     healthcheck:
-      test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
       interval: 30s
       timeout: 10s
       start_period: 20s
       retries: 3
 
-# ── Named volumes ──────────────────────────────────────────────────────────────
 volumes:
   byob-data:
-    driver: local

@@ -134,7 +134,7 @@ ________________________________________________________________________________
 
 ## 🐳 Docker Deployment
 
-The BYOB Web GUI is published as a Docker image to [GitHub Container Registry](https://ghcr.io/malwaredllc/byob) and rebuilt automatically on every push to `master`.
+The BYOB Web GUI is published as a Docker image to [GitHub Container Registry](https://ghcr.io/hypersamauwu/byob-docker) and rebuilt automatically on every push to `master`.
 
 ### Prerequisites
 
@@ -156,7 +156,7 @@ docker run -d \
   -v byob-data:/data \
   -e BYOB_APP_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
   -e SQLALCHEMY_DATABASE_URI="sqlite:////data/database.db" \
-  ghcr.io/malwaredllc/byob:latest
+  ghcr.io/hypersamauwu/byob-docker:latest
 ```
 
 Then navigate to **http://localhost:5000** and create your first user account.
@@ -170,7 +170,7 @@ Then navigate to **http://localhost:5000** and create your first user account.
 1. **Download the compose file** (no need to clone the whole repo):
 
 ```bash
-curl -O https://raw.githubusercontent.com/malwaredllc/byob/master/docker-compose.yml
+curl -O https://raw.githubusercontent.com/hypersamaUwU/byob-docker/master/docker-compose.yml
 ```
 
 2. **(Optional but recommended)** Create a `.env` file in the same directory to configure secrets:
@@ -254,8 +254,8 @@ docker run --rm \
 If you want to build from source instead of pulling from the registry:
 
 ```bash
-git clone https://github.com/malwaredllc/byob.git
-cd byob/web-gui
+git clone https://github.com/hypersamaUwU/byob-docker.git
+cd byob-docker/web-gui
 docker build -t byob-web-gui:local .
 docker run -d -p 5000:5000 -p 1337:1337 -v byob-data:/data byob-web-gui:local
 ```
