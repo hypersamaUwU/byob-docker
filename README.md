@@ -129,3 +129,134 @@ ________________________________________________________________________________
 1) __Remote Import Encryption__ - encryption for data streams of packages/modules being remotely imported (to maintain confidentiality/authenticity/integrity and prevent any remote code execution vulnerabilities arising from deserialization)
 2) __Transport Types__ - add support for more transport types (HTTP/S, DNS, etc.)
 3) __Bug Fixes__ - fix any bugs/issues
+
+________________________________________________________________________________________________
+
+## 🐳 Docker Deployment
+
+The BYOB Web GUI is published as a Docker image to [GitHub Container Registry](https://ghcr.io/malwaredllc/byob) and rebuilt automatically on every push to `master`.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/install/) v2+ *(for the Compose method)*
+
+---
+
+### Method 1 — `docker run` (single command)
+
+```bash
+docker run -d \
+  --name byob-web-gui \
+  --restart unless-stopped \
+  -p 5000:5000 \
+  -p 1337:1337 \
+  -p 1338:1338 \
+  -p 1339:1339 \
+  -v byob-data:/data \
+  -e BYOB_APP_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
+  -e SQLALCHEMY_DATABASE_URI="sqlite:////data/database.db" \
+  ghcr.io/malwaredllc/byob:latest
+```
+
+Then navigate to **http://localhost:5000** and create your first user account.
+
+> **Tip:** Replace `$(python3 -c '...')` with a fixed strong secret in production so the key persists across container restarts.
+
+---
+
+### Method 2 — `docker compose` (recommended, no Git clone required)
+
+1. **Download the compose file** (no need to clone the whole repo):
+
+```bash
+curl -O https://raw.githubusercontent.com/malwaredllc/byob/master/docker-compose.yml
+```
+
+2. **(Optional but recommended)** Create a `.env` file in the same directory to configure secrets:
+
+```bash
+# .env
+BYOB_SECRET_KEY=your_very_long_random_secret_key_here
+BYOB_WEB_PORT=5000
+BYOB_C2_PORT=1337
+```
+
+Generate a secure key with:
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+3. **Start the application:**
+
+```bash
+docker compose up -d
+```
+
+4. **Check that it's running:**
+
+```bash
+docker compose ps
+docker compose logs -f byob
+```
+
+5. **Open the web GUI:** [http://localhost:5000](http://localhost:5000)
+
+6. **Stop / remove:**
+
+```bash
+docker compose down          # stop containers (data is preserved)
+docker compose down -v       # stop + delete all data (irreversible)
+```
+
+---
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `BYOB_APP_SECRET_KEY` | *(empty)* | Flask secret key — **set this in production!** |
+| `SQLALCHEMY_DATABASE_URI` | `sqlite:////data/database.db` | Database connection string |
+| `BYOB_WEB_PORT` | `5000` | Host port for the web GUI *(compose only)* |
+| `BYOB_C2_PORT` | `1337` | Host port for the C2 TCP listener *(compose only)* |
+
+---
+
+### Port Reference
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| `5000` | TCP/HTTP | Flask web GUI dashboard |
+| `1337` | TCP | C2 reverse shell listener (clients connect here) |
+| `1338` | TCP/HTTP | BYOB modules server (auto-started by C2) |
+| `1339` | TCP/HTTP | Python packages server (auto-started by C2) |
+
+> **Firewall note:** For clients to reach your C2 server, port `1337` must be reachable from the internet. Ports `1338` and `1339` are used internally by C2 clients; expose them only if needed.
+
+---
+
+### Data Persistence
+
+The SQLite database is stored in a Docker **named volume** (`byob-data`) mounted at `/data` inside the container. This means your sessions, payloads, and user accounts survive container restarts and image upgrades.
+
+To back up your database:
+```bash
+docker run --rm \
+  -v byob-data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/byob-backup.tar.gz /data
+```
+
+---
+
+### Building the Image Locally
+
+If you want to build from source instead of pulling from the registry:
+
+```bash
+git clone https://github.com/malwaredllc/byob.git
+cd byob/web-gui
+docker build -t byob-web-gui:local .
+docker run -d -p 5000:5000 -p 1337:1337 -v byob-data:/data byob-web-gui:local
+```
+

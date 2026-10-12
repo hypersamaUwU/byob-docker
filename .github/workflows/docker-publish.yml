@@ -1,0 +1,114 @@
+# =============================================================================
+# BYOB Web GUI — Docker Build & Publish Workflow
+# =============================================================================
+# Triggers:
+#   • Push to the `master` branch  → build + push image to ghcr.io
+#   • Pull requests to `master`    → build only (no push), to validate the
+#                                    Dockerfile before merging
+# =============================================================================
+
+name: Docker Build & Publish
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # GitHub Container Registry (ghcr.io)
+  REGISTRY: ghcr.io
+  # Image name: ghcr.io/<owner>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ── Job 1: Run existing test suite ─────────────────────────────────────────
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+          cache-dependency-path: "web-gui/requirements.txt"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          pip install -r web-gui/requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          # Fail on syntax errors or undefined names only
+          flake8 web-gui/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run tests
+        run: |
+          cd web-gui
+          pytest
+
+  # ── Job 2: Build & push Docker image ───────────────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test            # only runs after tests pass
+    permissions:
+      contents: read
+      packages: write      # required to push to ghcr.io
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Extract metadata (tags, labels) for Docker
+      # Tags generated:
+      #   • ghcr.io/<owner>/<repo>:latest        (on push to master)
+      #   • ghcr.io/<owner>/<repo>:<short-sha>   (always)
+      #   • ghcr.io/<owner>/<repo>:pr-<number>   (on PRs, no push)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+            type=ref,event=pr
+
+      # Log in to the GitHub Container Registry (uses the built-in GITHUB_TOKEN)
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Set up Docker Buildx for advanced build features (multi-platform, cache)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build and push (or just build on PRs)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web-gui          # Dockerfile lives inside web-gui/
+          file: ./web-gui/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Layer caching via GitHub Actions cache backend for faster re-builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Print the image digest for traceability in the Actions log
+      - name: Image digest
+        if: github.event_name != 'pull_request'
+        run: echo "Published image digest ${{ steps.build-and-push.outputs.digest }}"
