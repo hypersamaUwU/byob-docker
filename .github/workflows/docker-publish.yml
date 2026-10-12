@@ -38,14 +38,6 @@ jobs:
           cache: "pip"
           cache-dependency-path: "web-gui/requirements.txt"
 
-      # opencv-python requires libGL at runtime on headless Ubuntu runners
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            libgl1-mesa-glx \
-            libglib2.0-0
-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip

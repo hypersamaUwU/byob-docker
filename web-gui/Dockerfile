@@ -19,10 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc \
         libssl-dev \
         libffi-dev \
-        libglib2.0-0 \
-        libsm6 \
-        libxrender1 \
-        libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -41,14 +37,8 @@ LABEL org.opencontainers.image.title="BYOB Web GUI" \
       org.opencontainers.image.description="Build Your Own Botnet — Flask C2 web interface" \
       org.opencontainers.image.source="https://github.com/malwaredllc/byob"
 
-# Runtime system libraries needed by opencv-python and other native packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libglib2.0-0 \
-        libsm6 \
-        libxrender1 \
-        libxext6 \
-        libgl1-mesa-glx \
-    && rm -rf /var/lib/apt/lists/*
+# No extra system libraries needed — opencv-python-headless ships without GUI bindings
+RUN true
 
 # Copy installed Python packages from the builder stage
 COPY --from=builder /install/deps /usr/local
