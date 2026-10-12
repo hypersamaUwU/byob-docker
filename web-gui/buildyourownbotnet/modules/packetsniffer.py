@@ -144,7 +144,6 @@ def _eth_header(data):
         globals()['log'].write("\nError in {} header: '{}'".format('ETH', str(e)))
 
 def _run():
-    global flag
     # try:
     sniffer_socket = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
     while True:

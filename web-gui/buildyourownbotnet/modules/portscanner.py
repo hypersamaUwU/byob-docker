@@ -649,7 +649,6 @@ ports = {
 
 
 def _ping(host):
-    global results
     try:
         if host not in results:
             if subprocess.call("ping -{} 1 -W 90 {}".format('n' if os.name == 'nt' else 'c', host), 0, None, subprocess.PIPE, subprocess.PIPE, subprocess.PIPE, shell=True) == 0:
@@ -667,7 +666,6 @@ def _ping(host):
 @util.threaded
 def _threader():
     while True:
-        global tasks
         try:
             method, task = tasks.get_nowait()
             if callable(method):
@@ -678,8 +676,6 @@ def _threader():
 
 
 def _scan(target):
-    global ports
-    global results
 
     try:
         data = None
@@ -722,9 +718,6 @@ def run(target='192.168.1.1', ports=[21,22,23,25,80,110,111,135,139,443,445,554,
     Returns onlne targets & open ports as key-value pairs in dictionary (JSON) object
 
     """
-    global tasks
-    global threads
-    global results
     if not util.ipv4(target):
         raise ValueError("target is not a valid IPv4 address")
     if _ping(target):

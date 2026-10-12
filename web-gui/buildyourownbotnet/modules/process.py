@@ -165,7 +165,6 @@ def block(process_name='taskmgr.exe'):
     :param str process_name:    process name to block (default: taskmgr.exe)
 
     """
-    global template_block
     try:
         code = template_block.substitute(PROCESS=process_name)
         _ = util.powershell(code)

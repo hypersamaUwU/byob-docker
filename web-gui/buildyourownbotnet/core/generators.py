@@ -176,7 +176,6 @@ def main(function, *args, **kwargs):
     Returns code snippet as a string
 
     """
-    global template_main
     options = list(args)
     for k,v in kwargs.items():
         if not v:
@@ -200,7 +199,6 @@ def loader(host='127.0.0.1', port=1337, packages=[]):
     :param list imports:    package/modules to remotely import
 
     """
-    global template_load
     base_url = 'http://{}:{}'.format(host, port)
     return template_load.substitute(PACKAGES=repr(packages), BASE_URL=repr(base_url))
 
@@ -217,7 +215,6 @@ def freeze(filename, icon=None, hidden=None, owner=None, operating_system=None, 
     Returns output filename as a string
 
     """
-    global template_spec
 
     # remember current working directory to return later
     original_dir = os.getcwd()
@@ -319,7 +316,6 @@ def app(filename, icon=None):
 
     Returns output filename as a string
     """
-    global template_plist
     version = '%d.%d.%d' % (random.randint(0,3), random.randint(0,6), random.randint(1, 9))
     baseName = os.path.basename(filename)
     bundleName = os.path.splitext(baseName)[0]

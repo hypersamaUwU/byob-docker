@@ -248,7 +248,6 @@ def _modules(options, **kwargs):
 
 
 def _imports(options, **kwargs):
-    global __load__
     assert 'modules' in kwargs, "missing keyword argument 'modules'"
     globals()['__load__'] = threading.Event()
     globals()['__spin__'] = _spinner(__load__)
